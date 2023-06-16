@@ -1,0 +1,499 @@
+{% load static %}
+<!doctype html>
+<html lang="en" data-theme="dark">
+    <link rel="stylesheet" href="{% static 'pico.css' %}">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Analyst Toolkit</title>
+    <script>
+      function checkAll(ckType){
+          //var ckName = document.getElementsByName(ckType.name);
+          var checked = document.getElementById(ckType.id);
+
+          if (checked.checked) {
+              for(var i=1; i < 7; i++){
+                  x = document.getElementById(i)
+                  x.checked = false
+              }                      
+                                 
+
+          }
+      }
+      
+      function checkOther(ckType) {
+          var checked = document.getElementById(ckType.id);
+              if (checked.checked) {
+                  x = document.getElementById('report')
+                  x.checked = false
+              }
+      }
+
+      function copyDivToClipboard() {
+                    var range = document.createRange();
+                    range.selectNode(document.getElementById("QueryResults"));
+                    window.getSelection().removeAllRanges(); // clear current selection
+                    window.getSelection().addRange(range); // to select text
+                    document.execCommand("copy");
+                    window.getSelection().removeAllRanges();// to deselect
+                }
+    </script>
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <li><h4>Analyst Toolkit</h4></li>
+        <!--<li><a href="{% url 'dns' %}">Home</a></li>-->
+      </ul>
+      <ul><!--src="{% static 'home_button.png' %}"/-->
+        <li><a href="{% url 'dns' %}">Home</a></li>
+        <!--<li><a href="{% url 'dns' %}">DNS Query</a></li>-->
+        <!--<li><a href="#">Contact</a></li>-->
+      </ul>
+    </nav>
+    <main class="container">
+      <form method="post" action="" style="margin-top: 0px;">
+        {% csrf_token %}
+        
+        <div style="margin-top: 30px;" class="grid">
+          <div>
+            <input placeholder="Domain" type="text" id="dname1" name="DomainName">
+          </div>
+          <div style="text-align: center;">
+            <button type="submit" name="Search" style="width: 47%;">Search</button>
+            <button type="button" onclick="copyDivToClipboard()" name="Search" style="width: 47%;">Copy</button>
+          </div>
+        </div>
+        <div style="text-align: center;">
+            <label for="report">
+              <input onClick="checkAll(this)" type="checkbox" value="report" id="report" name="QueryType" checked>
+              report
+            </label>
+            <label for="1">
+              <input onClick="checkOther(this)" type="checkbox" value="DMARC Record" id="1" name="QueryType">
+              dmarc
+            </label> 
+            <label for="2">
+              <input onClick="checkOther(this)" type="checkbox" value="SPF Record" id="2" name="QueryType">
+              spf
+            </label> 
+            <label for="3">
+              <input onClick="checkOther(this)" type="checkbox" value="DKIM Selectors" id="3" name="QueryType">
+              dkim
+            </label> 
+            <label for="4">
+              <input onClick="checkOther(this)" type="checkbox" value="A Record" id="4" name="QueryType">
+              a
+            </label> 
+            <label for="5">
+              <input onClick="checkOther(this)" type="checkbox" value="AAAA Record" id="5" name="QueryType">
+              aaaa
+            </label> 
+            <label for="6">
+              <input onClick="checkOther(this)" type="checkbox" value="TXT Record" id="6" name="QueryType">
+              TXT
+            </label>
+        </div>
+        
+        
+        {% if report_type == 'report' %}
+          
+          <table role="grid" class="tble_rpt" id="QueryResults">
+            <tr>
+              <td class="rpt_title"><h5>Domain: {{ domain_name }}</h5><br></td>
+            </tr>
+            <!--DMARC Record-->  
+            <tr>
+              <td class="rpt_title">{{ dmarc_title }}</td>
+            </tr>
+            {% for i in dmarc_list %}
+              {% if i == "None" %}
+                <tr>
+                  <td class="red">{{i}}</td>
+                </tr>
+              {% endif %}
+            {% endfor %}
+
+            {% if rpt_to_dmarcian|length >= 1 and no_rpt_to_dmarcian|length >= 1 %}
+              {% for i in rpt_to_dmarcian %}
+                <tr>
+                  <td class="red">{{i}}</td>
+                </tr>
+              {% endfor %} 
+              {% for i in no_rpt_to_dmarcian %}
+                <tr>
+                  <td class="red">{{i}}</td>
+                </tr>
+              {% endfor %}    
+            {% endif %}
+            
+            {% if rpt_to_dmarcian|length == 1 %}
+              {% for i in rpt_to_dmarcian %}
+                <tr>
+                  <td class="green">{{i}}</td>
+                </tr>
+              {% endfor %}
+            {% elif rpt_to_dmarcian|length > 1 %}
+              {% for i in rpt_to_dmarcian %}
+                <tr>
+                  <td class="red">{{i}}</td>
+                </tr>
+              {% endfor %}
+            {% endif %}
+            
+            {% if no_rpt_to_dmarcian|length == 1 %}
+              {% for i in no_rpt_to_dmarcian %}
+                <tr>
+                  <td class="amber">{{i}}</td>
+                </tr>
+              {% endfor %}
+            {% elif no_rpt_to_dmarcian|length > 1 %}
+              {% for i in no_rpt_to_dmarcian %}
+                <tr>
+                  <td class="red">{{i}}</td>
+                </tr>
+              {% endfor %}
+            {% endif %} 
+              
+            <!--DDE Record--> 
+            {% if dde_record != "None" %}
+              <tr>
+                <td class="rpt_title"><br>{{ dde_title }}</td>
+              </tr>  
+              <tr>
+                <td class="red">{{ dde_record }}</td>
+              </tr>
+            {% endif %} 
+
+            <!--SPF Record-->  
+            <tr>
+              <td class="rpt_title"><br>{{ spf_title }}</td>
+            </tr>             
+            {% for i in spf_list %}
+              {% if i == "None" %}
+                <tr>
+                  <td class="red">{{i}}</td>
+                </tr>
+              {% elif spf_list|length == 1 %}
+                <tr>
+                  <td class="green">{{i}}</td>
+                </tr>
+              {% else %}
+                <tr>
+                  <td class="red">{{i}}</td>
+                </tr>
+              {% endif %} 
+               
+            {% endfor %}  
+            
+            <!--DKIM Record-->  
+            <tr>
+              <td class="rpt_title"><br>{{ dkim_title }}</td>
+            </tr>
+            {% for i in dkim_record %}
+              {% if i == "None" %}
+                <tr>
+                  <td class="red">{{i}}</td>
+                </tr>
+              {% else %}
+                <tr>
+                  <td class="green">{{i}}</td>
+                </tr>
+              {% endif %}  
+            {% endfor %}
+                          
+            <!--A Record--> 
+            <tr>
+              <td class="rpt_title"><br>{{ a_title }}</td>
+            </tr>              
+            {% if a_record|length == 0 %}
+              <tr>
+                <td class="red">None</td>
+              </tr>
+            {% else %}
+            <tr>
+              <td class="green">
+                {% for i in a_record %}
+                  {{ i }}<br>
+                {% endfor %}
+              </td>
+            </tr>
+            {% endif %}              
+
+            <!--AAAA Record--> 
+            <tr>
+              <td class="rpt_title"><br>{{ aaaa_title }}</td>
+            </tr>              
+            {% if aaaa_record|length == 0 %}
+              <tr>
+                <td class="red">None</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td class="green">
+                  {% for i in aaaa_record %}
+                    {{ i }}<br>
+                  {% endfor %}
+                </td>
+              </tr>
+            {% endif %}  
+
+            <!--SOA Record--> 
+            <tr>
+              <td class="rpt_title"><br>{{ soa_title }}</td>
+            </tr>            
+            {% if soa_record|length == 0 %}
+              <tr>
+                <td class="red">None</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td class="green">
+                  {% for i in soa_record %}
+                    {{ i }}<br>
+                  {% endfor %}
+                </td>
+              </tr>
+            {% endif %} 
+              
+
+              <!--MX Record--> 
+              <tr>
+                <td class="rpt_title"><br>{{ mx_title }}</td>
+              </tr>            
+              {% if mx_record|length == 0 %}
+                <tr>
+                  <td class="red">None</td>
+                </tr>
+              {% else %}
+                
+                  <tr>
+                    <td class="green">
+                      {% for i in mx_record %}
+                        {{ i }}<br>
+                      {% endfor %}
+                    </td>
+                  </tr>
+                
+              {% endif %}
+
+              <!--NS Record--> 
+              <tr>
+                <td class="rpt_title"><br>{{ ns_title }}</td>
+              </tr>            
+              {% if ns_record|length == 0 %}
+                <tr>
+                  <td class="red">None</td>
+                </tr>
+              {% else %}
+                
+                  <tr>
+                    <td class="green">
+                      {% for i in ns_record %}
+                        {{ i }}<br>
+                      {% endfor %}
+                  </tr>
+                </td>
+              {% endif %}
+
+              <!--BIMI Record 
+              <tr>
+                <td style="background-color: #ffffff;"><br>{{ bimi_title }}</td>
+              </tr>            
+              <tr>
+                <td style="border-radius: 10px; background-color: #bfdbc8;">{{ bimi_record }}</td>
+              </tr>
+              -->
+          </table>
+        {% elif report_type == 'individual' %}
+          <table role="grid" class="tble_rpt">
+            <tr>
+              <td class="rpt_title">Domain: {{ domain_name }}</td>
+            </tr>
+            {% for x, y in page_titles.items %}
+              <!---- DMARC Record ---->
+              {% if x == 'DMARC Record' %}
+                <tr>
+                  <td class="rpt_title">{{ dmarc_title }}</td>
+                </tr>
+                {% for i in dmarc_list %}
+                  {% if i == "None" %}
+                    <tr>
+                      <td class="red">{{i}}</td>
+                    </tr>
+                  {% endif %}
+                {% endfor %}
+
+                {% if rpt_to_dmarcian|length >= 1 and no_rpt_to_dmarcian|length >= 1 %}
+                  {% for i in rpt_to_dmarcian %}
+                    <tr>
+                      <td class="red">{{i}}</td>
+                    </tr>
+                  {% endfor %} 
+                  {% for i in no_rpt_to_dmarcian %}
+                    <tr>
+                      <td class="red">{{i}}</td>
+                    </tr>
+                  {% endfor %}    
+                {% endif %}
+                
+                {% if rpt_to_dmarcian|length == 1 %}
+                  {% for i in rpt_to_dmarcian %}
+                    <tr>
+                      <td class="green">{{i}}</td>
+                    </tr>
+                  {% endfor %}
+                {% elif rpt_to_dmarcian|length > 1 %}
+                  {% for i in rpt_to_dmarcian %}
+                    <tr>
+                      <td class="red">{{i}}</td>
+                    </tr>
+                  {% endfor %}
+                {% endif %}
+                
+                {% if no_rpt_to_dmarcian|length == 1 %}
+                  {% for i in no_rpt_to_dmarcian %}
+                    <tr>
+                      <td class="amber">{{i}}</td>
+                    </tr>
+                  {% endfor %}
+                {% endif %} 
+                
+              <!---- SPF Record ---->  
+              
+                {% if dde_record != "None" %}
+                  <tr>
+                    <td class="rpt_title"><br>{{ dde_title }}</td>
+                  </tr>  
+                  <tr>
+                    <td class="red">{{ dde_record }}</td>
+                  </tr>
+                {% endif %} 
+
+              <!---- SPF Record ---->  
+              {% elif x == 'SPF Record' %}
+                <tr>
+                  <td class="rpt_title"><br>{{ spf_title }}</td>
+                </tr>             
+                {% for i in spf_list %}
+                  {% if i == "None" %}
+                    <tr>
+                      <td class="red">{{i}}</td>
+                    </tr>
+                  {% elif spf_list|length == 1 %}
+                    <tr>
+                      <td class="green">{{i}}</td>
+                    </tr>
+                  {% else %}
+                    <tr>
+                      <td class="red">{{i}}</td>
+                    </tr>
+                  {% endif %}  
+                {% endfor %}
+
+              <!---- DKIM Record ----> 
+              {% elif x == 'DKIM Selectors' %}
+                <tr>
+                  <td class="rpt_title"><br>{{ dkim_title }}</td>
+                </tr>
+                {% for i in dkim_record %}
+                  {% if i == "None" %}
+                    <tr>
+                      <td class="red">{{i}}</td>
+                    </tr>
+                  {% else %}
+                    <tr>
+                      <td class="green">{{i}}</td>
+                    </tr>
+                  {% endif %}  
+                {% endfor %}  
+              <!---- A Record ----> 
+              {% elif x == 'A Record' %}
+                <tr>
+                  <td class="rpt_title"><br>{{ a_title }}</td>
+                </tr>              
+                {% if a_record|length == 0 %}
+                  <tr>
+                    <td class="red">None</td>
+                  </tr>
+                {% else %}
+                <tr>
+                  <td class="green">
+                    {% for i in a_record %}
+                      {{ i }}<br>
+                    {% endfor %}
+                  </td>
+                </tr>
+                {% endif %} 
+
+              <!---- AAA Record ----> 
+              {% elif x == 'AAAA Record' %}
+                <tr>
+                  <td class="rpt_title"><br>{{ aaaa_title }}</td>
+                </tr>              
+                {% if aaaa_record|length == 0 %}
+                  <tr>
+                    <td class="red">None</td>
+                  </tr>
+                {% else %}
+                  <tr>
+                    <td class="green">
+                      {% for i in aaaa_record %}
+                        {{ i }}<br>
+                      {% endfor %}
+                    </td>
+                  </tr>
+                {% endif %}  
+
+              <!---- TXT Record ----> 
+              {% elif x == 'TXT Record' %}
+                <tr>
+                  <td class="rpt_title"><br>{{ txt_title }}</td>
+                </tr>
+                {% for i in txt_list %}
+                  {% if i == "None" %}
+                    <tr>
+                      <td class="red">{{i}}</td>
+                    </tr>
+                  {% else %}
+                    <tr>
+                      <td class="green">{{i}}</td>
+                    </tr>
+                  {% endif %}  
+                {% endfor %}
+
+
+              {% else %}
+              
+                  <tr>
+                      <td class="rpt_title">{{x}}</td>
+                  </tr>
+                  <tr>
+                      <td>{{y}}</td>
+                  </tr>
+              
+              
+              {% endif %}
+            {% endfor %}
+          </table>
+        {% else %}
+        <table role="grid" class="tble_rpt">
+          <tr>
+            <td class="rpt_title"><br>Enter a domain name in the text field, select the type of report you wish to produce and select "Search"</td>
+          </tr>
+        </table>
+        {% endif %}
+      
+          
+        
+        
+            
+            
+        
+        
+    </form>
+    
+    </main>
+  </body>
+</html>
